@@ -48,12 +48,14 @@ export async function createPost({ studentId, authorName, content, photoFile }) 
   let photoUrl = null
 
   if (isSupabaseConfigured) {
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+    if (!authUser) return null
+
     // Upload photo to Supabase Storage
     if (photoFile) {
       const ext = photoFile.name.split('.').pop()
       const fileName = `${Date.now()}.${ext}`
-      const { data: user } = await supabase.auth.getUser()
-      const filePath = `${user.user.id}/${fileName}`
+      const filePath = `${authUser.id}/${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('post-photos')
@@ -67,12 +69,11 @@ export async function createPost({ studentId, authorName, content, photoFile }) 
       }
     }
 
-    const { data: user } = await supabase.auth.getUser()
     const { data, error } = await supabase
       .from('student_posts')
       .insert({
         student_id: studentId,
-        author_id: user.user.id,
+        author_id: authUser.id,
         author_name: authorName,
         content,
         photo_url: photoUrl,
