@@ -21,7 +21,11 @@ export default function StudentProfile() {
   const [showForm, setShowForm] = useState(false)
   const fileInputRef = useRef(null)
   const videoInputRef = useRef(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef(null)
   const { user } = useAuth()
+
+  const isOwnPage = user && student?.user_id === user.id
 
   useEffect(() => {
     if (isSupabaseConfigured) {
@@ -98,6 +102,38 @@ export default function StudentProfile() {
     }
   }
 
+  async function handleAvatarUpload(e) {
+    const file = e.target.files[0]
+    if (!file || !isOwnPage) return
+    setUploadingAvatar(true)
+
+    if (isSupabaseConfigured) {
+      const { supabase } = await import('../lib/supabase')
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const ext = file.name.split('.').pop()
+      const filePath = `${authUser.id}/avatar.${ext}`
+
+      // Delete old avatar if exists
+      await supabase.storage.from('post-photos').remove([filePath])
+
+      const { error: uploadError } = await supabase.storage
+        .from('post-photos')
+        .upload(filePath, file)
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from('post-photos').getPublicUrl(filePath)
+        // Add timestamp to bust cache
+        const avatarUrl = urlData.publicUrl + '?t=' + Date.now()
+        await supabase.from('students').update({ avatar_url: avatarUrl }).eq('user_id', authUser.id)
+        setStudent({ ...student, avatar_url: avatarUrl })
+      } else {
+        console.error('Avatar upload error:', uploadError)
+      }
+    }
+
+    setUploadingAvatar(false)
+  }
+
   if (!student) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 text-center text-gray-400">
@@ -117,8 +153,37 @@ export default function StudentProfile() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-400 to-orange-500 px-8 py-10 text-center">
-          <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-md">
-            {student.name[0]}
+          <div
+            className={`w-20 h-20 rounded-full mx-auto mb-4 shadow-md overflow-hidden relative ${
+              isOwnPage ? 'cursor-pointer group' : ''
+            }`}
+            onClick={() => isOwnPage && avatarInputRef.current?.click()}
+          >
+            {student.avatar_url ? (
+              <img
+                src={student.avatar_url}
+                alt={student.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-white flex items-center justify-center text-3xl">
+                {student.name[0]}
+              </div>
+            )}
+            {isOwnPage && (
+              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-white text-xs">
+                  {uploadingAvatar ? '上传中...' : '换头像'}
+                </span>
+              </div>
+            )}
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              className="hidden"
+            />
           </div>
           <h1 className="text-2xl font-bold text-white">{student.name}</h1>
           <p className="text-orange-100 mt-1">{student.university} · {student.major}</p>
