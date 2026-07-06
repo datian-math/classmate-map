@@ -85,7 +85,7 @@ export default function Home() {
                       <img
                         src={post.photo_url}
                         alt=""
-                        className="w-full h-28 object-cover"
+                        className="w-full h-36 object-contain bg-gray-50"
                         loading="lazy"
                       />
                       <div className="p-1.5">
