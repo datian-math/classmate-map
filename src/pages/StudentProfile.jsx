@@ -174,47 +174,35 @@ export default function StudentProfile() {
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-400 to-orange-500 px-8 py-10 text-center">
-          <div
-            className={`w-20 h-20 rounded-full mx-auto mb-4 shadow-md overflow-hidden relative ${
-              isOwnPage ? 'cursor-pointer group' : ''
-            }`}
-            onClick={() => isOwnPage && avatarInputRef.current?.click()}
-          >
-            {student.avatar_url ? (
-              <img
-                src={student.avatar_url}
-                alt={student.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-white flex items-center justify-center text-3xl">
-                {student.name[0]}
-              </div>
-            )}
-            {isOwnPage && (
-              <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-white text-xs">
-                  {uploadingAvatar ? '上传中...' : '换头像'}
-                </span>
-              </div>
-            )}
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
-          </div>
-          {isOwnPage && student.avatar_url && (
-            <button
-              onClick={handleAvatarDelete}
-              disabled={uploadingAvatar}
-              className="text-xs text-orange-100 hover:text-white bg-transparent border-none cursor-pointer mb-2"
+          <div className="relative inline-block mx-auto mb-4 group">
+            {/* Avatar circle */}
+            <div
+              className={`w-20 h-20 rounded-full shadow-md overflow-hidden ${isOwnPage ? 'cursor-pointer' : ''}`}
+              onClick={() => isOwnPage && !student.avatar_url && avatarInputRef.current?.click()}
             >
-              删除头像
-            </button>
-          )}
+              {student.avatar_url ? (
+                <img src={student.avatar_url} alt={student.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-white flex items-center justify-center text-3xl">{student.name[0]}</div>
+              )}
+              {isOwnPage && !student.avatar_url && (
+                <div className="absolute inset-0 bg-black bg-opacity-30 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-white text-xs">{uploadingAvatar ? '上传中...' : '上传头像'}</span>
+                </div>
+              )}
+            </div>
+            {/* Delete X button (only when avatar exists) */}
+            {isOwnPage && student.avatar_url && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleAvatarDelete() }}
+                disabled={uploadingAvatar}
+                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center border-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              >
+                ×
+              </button>
+            )}
+            <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+          </div>
           <h1 className="text-2xl font-bold text-white">{student.name}</h1>
           <p className="text-orange-100 mt-1">{student.university} · {student.major}</p>
         </div>
