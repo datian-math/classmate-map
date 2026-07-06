@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import Breadcrumb from '../components/Breadcrumb'
 import { fetchStudent } from '../lib/students'
-import { fetchPosts, createPost, deletePost } from '../lib/posts'
+import { fetchPosts, createPost, deletePost, fetchComments, createComment, fetchLikes, toggleLike } from '../lib/posts'
 import { useAuth } from '../lib/auth'
 import { mockStudents } from '../lib/mockData'
 
@@ -244,41 +244,145 @@ export default function StudentProfile() {
             ) : (
               <div className="space-y-3">
                 {posts.map((post) => (
-                  <div key={post.id} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 bg-orange-200 rounded-full flex items-center justify-center text-xs font-bold text-orange-700">
-                          {post.author_name[0]}
-                        </div>
-                        <span className="text-sm font-medium text-gray-700">{post.author_name}</span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(post.created_at).toLocaleDateString('zh-CN')}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => handleDelete(post.id)}
-                        className="text-xs text-gray-300 hover:text-red-400 bg-transparent border-none cursor-pointer"
-                      >
-                        删除
-                      </button>
-                    </div>
-                    {post.content && (
-                      <p className="text-gray-700 text-sm whitespace-pre-wrap">{post.content}</p>
-                    )}
-                    {post.photo_url && (
-                      <img
-                        src={post.photo_url}
-                        alt="照片"
-                        className="mt-2 max-h-60 rounded-lg border border-gray-200"
-                      />
-                    )}
-                  </div>
+                  <PostCard key={post.id} post={post} onDelete={handleDelete} user={user} />
                 ))}
               </div>
             )}
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+function PostCard({ post, onDelete, user }) {
+  const [likes, setLikes] = useState([])
+  const [comments, setComments] = useState([])
+  const [showComments, setShowComments] = useState(false)
+  const [commentText, setCommentText] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    fetchLikes(post.id).then(setLikes)
+    fetchComments(post.id).then(setComments)
+  }, [post.id])
+
+  const myId = user?.id
+  const hasLiked = myId ? likes.some((l) => l.user_id === myId) : false
+
+  async function handleLike() {
+    if (!myId) return
+    const result = await toggleLike(post.id)
+    if (result) {
+      if (result.liked) {
+        setLikes([...likes, { user_id: myId }])
+      } else {
+        setLikes(likes.filter((l) => l.user_id !== myId))
+      }
+    }
+  }
+
+  async function handleComment(e) {
+    e.preventDefault()
+    if (!commentText.trim()) return
+    setSubmitting(true)
+    const comment = await createComment({
+      postId: post.id,
+      authorName: '同学',
+      content: commentText.trim(),
+    })
+    if (comment) {
+      setComments([...comments, comment])
+      setCommentText('')
+    }
+    setSubmitting(false)
+  }
+
+  return (
+    <div className="bg-gray-50 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-orange-200 rounded-full flex items-center justify-center text-xs font-bold text-orange-700">
+            {post.author_name[0]}
+          </div>
+          <span className="text-sm font-medium text-gray-700">{post.author_name}</span>
+          <span className="text-xs text-gray-400">
+            {new Date(post.created_at).toLocaleDateString('zh-CN')}
+          </span>
+        </div>
+        <button
+          onClick={() => onDelete(post.id)}
+          className="text-xs text-gray-300 hover:text-red-400 bg-transparent border-none cursor-pointer"
+        >
+          删除
+        </button>
+      </div>
+      {post.content && (
+        <p className="text-gray-700 text-sm whitespace-pre-wrap">{post.content}</p>
+      )}
+      {post.photo_url && (
+        <img
+          src={post.photo_url}
+          alt="照片"
+          className="mt-2 max-h-60 rounded-lg border border-gray-200"
+        />
+      )}
+
+      {/* Like and comment buttons */}
+      <div className="flex items-center gap-4 mt-3 pt-2 border-t border-gray-100">
+        <button
+          onClick={handleLike}
+          className={`flex items-center gap-1 text-xs border-none cursor-pointer bg-transparent ${
+            hasLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'
+          }`}
+        >
+          {hasLiked ? '❤️' : '🤍'} {likes.length > 0 ? likes.length : '点赞'}
+        </button>
+        <button
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 border-none cursor-pointer bg-transparent"
+        >
+          💬 {comments.length > 0 ? `${comments.length}条评论` : '评论'}
+        </button>
+      </div>
+
+      {/* Comments section */}
+      {showComments && (
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          {comments.length > 0 && (
+            <div className="space-y-2 mb-2">
+              {comments.map((c) => (
+                <div key={c.id} className="flex items-start gap-2">
+                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-[9px] font-bold text-blue-600 shrink-0 mt-0.5">
+                    {c.author_name[0]}
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-600">{c.author_name}</span>
+                    <span className="text-xs text-gray-500 ml-1">{c.content}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {user && (
+            <form onSubmit={handleComment} className="flex gap-2">
+              <input
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="写评论..."
+                className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-orange-400"
+              />
+              <button
+                type="submit"
+                disabled={submitting || !commentText.trim()}
+                className="text-xs text-orange-500 hover:text-orange-600 bg-transparent border-none cursor-pointer disabled:opacity-30"
+              >
+                发送
+              </button>
+            </form>
+          )}
+        </div>
+      )}
     </div>
   )
 }

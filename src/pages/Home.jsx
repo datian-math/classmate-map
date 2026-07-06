@@ -60,7 +60,7 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
-      <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
+      <h1 className="text-3xl font-bold text-center text-purple-600 mb-2" style={{ fontFamily: 'KaiTi, STKaiti, serif' }}>
         大田的学生们
       </h1>
       <p className="text-center text-gray-500 mb-6">
