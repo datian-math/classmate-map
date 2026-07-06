@@ -61,10 +61,10 @@ export default function Home() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
-        同学蹭饭图
+        大田的学生们
       </h1>
       <p className="text-center text-gray-500 mb-6">
-        点击省份，看看同学们都在哪里读大学
+        点击省份，看看同学们在哪个城市
       </p>
 
       <div className="flex gap-4">
