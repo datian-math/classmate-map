@@ -15,9 +15,12 @@ export default function StudentProfile() {
   const [newContent, setNewContent] = useState('')
   const [newPhoto, setNewPhoto] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
+  const [newVideo, setNewVideo] = useState(null)
+  const [videoPreview, setVideoPreview] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const fileInputRef = useRef(null)
+  const videoInputRef = useRef(null)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -45,9 +48,22 @@ export default function StudentProfile() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  function handleVideoSelect(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setNewVideo(file)
+    setVideoPreview(URL.createObjectURL(file))
+  }
+
+  function removeVideo() {
+    setNewVideo(null)
+    setVideoPreview(null)
+    if (videoInputRef.current) videoInputRef.current.value = ''
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!newContent.trim() && !newPhoto) return
+    if (!newContent.trim() && !newPhoto && !newVideo) return
     setSubmitting(true)
 
     const authorName = user ? '同学' : '访客'
@@ -57,6 +73,7 @@ export default function StudentProfile() {
       authorName,
       content: newContent.trim(),
       photoFile: newPhoto,
+      videoFile: newVideo,
     })
 
     if (post) {
@@ -64,8 +81,11 @@ export default function StudentProfile() {
       setNewContent('')
       setNewPhoto(null)
       setPhotoPreview(null)
+      setNewVideo(null)
+      setVideoPreview(null)
       setShowForm(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
+      if (videoInputRef.current) videoInputRef.current.value = ''
     }
     setSubmitting(false)
   }
@@ -226,10 +246,45 @@ export default function StudentProfile() {
                   )}
                 </div>
 
+                {/* Video upload */}
+                <div>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoSelect}
+                    className="hidden"
+                  />
+                  {videoPreview ? (
+                    <div className="relative inline-block">
+                      <video
+                        src={videoPreview}
+                        className="h-24 rounded-lg border border-gray-200"
+                        muted
+                      />
+                      <button
+                        type="button"
+                        onClick={removeVideo}
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center border-none cursor-pointer"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => videoInputRef.current?.click()}
+                      className="text-sm text-gray-500 bg-white border border-dashed border-gray-300 rounded-lg px-4 py-2 hover:border-orange-400 hover:text-orange-500 cursor-pointer"
+                    >
+                      + 上传视频
+                    </button>
+                  )}
+                </div>
+
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    disabled={submitting || (!newContent.trim() && !newPhoto)}
+                    disabled={submitting || (!newContent.trim() && !newPhoto && !newVideo)}
                     className="bg-orange-500 text-white px-5 py-1.5 rounded-lg hover:bg-orange-600 text-sm font-medium disabled:opacity-50 border-none cursor-pointer"
                   >
                     {submitting ? '发送中...' : '发送'}
@@ -326,6 +381,15 @@ function PostCard({ post, onDelete, user }) {
           alt="照片"
           className="mt-2 max-h-60 rounded-lg border border-gray-200"
         />
+      )}
+      {post.video_url && (
+        <video
+          src={post.video_url}
+          controls
+          className="mt-2 max-w-full max-h-72 rounded-lg border border-gray-200"
+        >
+          您的浏览器不支持视频播放
+        </video>
       )}
 
       {/* Like and comment buttons */}

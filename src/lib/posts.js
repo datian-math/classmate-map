@@ -44,14 +44,15 @@ export async function fetchPosts(studentId) {
 /**
  * Create a new post
  */
-export async function createPost({ studentId, authorName, content, photoFile }) {
+export async function createPost({ studentId, authorName, content, photoFile, videoFile }) {
   let photoUrl = null
+  let videoUrl = null
 
   if (isSupabaseConfigured) {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) return null
 
-    // Upload photo to Supabase Storage
+    // Upload photo
     if (photoFile) {
       const ext = photoFile.name.split('.').pop()
       const fileName = `${Date.now()}.${ext}`
@@ -69,6 +70,24 @@ export async function createPost({ studentId, authorName, content, photoFile }) 
       }
     }
 
+    // Upload video
+    if (videoFile) {
+      const ext = videoFile.name.split('.').pop()
+      const fileName = `video_${Date.now()}.${ext}`
+      const filePath = `${authUser.id}/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('post-photos')
+        .upload(filePath, videoFile)
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from('post-photos')
+          .getPublicUrl(filePath)
+        videoUrl = urlData.publicUrl
+      }
+    }
+
     const { data, error } = await supabase
       .from('student_posts')
       .insert({
@@ -77,6 +96,7 @@ export async function createPost({ studentId, authorName, content, photoFile }) 
         author_name: authorName,
         content,
         photo_url: photoUrl,
+        video_url: videoUrl,
       })
       .select()
       .single()
@@ -88,12 +108,19 @@ export async function createPost({ studentId, authorName, content, photoFile }) 
     return data
   }
 
-  // Local mode - convert photo to base64 data URL
+  // Local mode
   if (photoFile) {
     photoUrl = await new Promise((resolve) => {
       const reader = new FileReader()
       reader.onload = () => resolve(reader.result)
       reader.readAsDataURL(photoFile)
+    })
+  }
+  if (videoFile) {
+    videoUrl = await new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.readAsDataURL(videoFile)
     })
   }
 
@@ -103,6 +130,7 @@ export async function createPost({ studentId, authorName, content, photoFile }) 
     author_name: authorName,
     content,
     photo_url: photoUrl,
+    video_url: videoUrl,
     created_at: new Date().toISOString(),
   }
 
