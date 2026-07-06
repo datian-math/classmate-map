@@ -134,6 +134,27 @@ export default function StudentProfile() {
     setUploadingAvatar(false)
   }
 
+  async function handleAvatarDelete() {
+    if (!isOwnPage || !student.avatar_url) return
+    if (!window.confirm('确定删除头像？')) return
+    setUploadingAvatar(true)
+
+    if (isSupabaseConfigured) {
+      const { supabase } = await import('../lib/supabase')
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+
+      // Remove from storage
+      const oldPath = authUser.id + '/avatar.' + student.avatar_url.split('/avatar.')[1]?.split('?')[0]
+      if (oldPath) await supabase.storage.from('post-photos').remove([oldPath])
+
+      // Clear avatar_url in database
+      await supabase.from('students').update({ avatar_url: null }).eq('user_id', authUser.id)
+      setStudent({ ...student, avatar_url: null })
+    }
+
+    setUploadingAvatar(false)
+  }
+
   if (!student) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12 text-center text-gray-400">
@@ -185,6 +206,15 @@ export default function StudentProfile() {
               className="hidden"
             />
           </div>
+          {isOwnPage && student.avatar_url && (
+            <button
+              onClick={handleAvatarDelete}
+              disabled={uploadingAvatar}
+              className="text-xs text-orange-100 hover:text-white bg-transparent border-none cursor-pointer mb-2"
+            >
+              删除头像
+            </button>
+          )}
           <h1 className="text-2xl font-bold text-white">{student.name}</h1>
           <p className="text-orange-100 mt-1">{student.university} · {student.major}</p>
         </div>
