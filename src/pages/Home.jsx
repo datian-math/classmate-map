@@ -28,7 +28,7 @@ export default function Home() {
   // Fetch weather for logged-in user's city
   useEffect(() => {
     async function loadWeather() {
-      let city = '武汉' // default city
+      let city = '钦州' // default city
       if (isSupabaseConfigured && user) {
         // In Supabase mode, look up the student's city
         const { supabase } = await import('../lib/supabase')
