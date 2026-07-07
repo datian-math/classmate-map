@@ -23,9 +23,48 @@ export default function StudentProfile() {
   const videoInputRef = useRef(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const avatarInputRef = useRef(null)
+  const [editing, setEditing] = useState(false)
+  const [editData, setEditData] = useState({})
   const { user } = useAuth()
 
   const isOwnPage = user && student?.user_id === user.id
+
+  function startEditing() {
+    setEditData({
+      name: student.name || '',
+      university: student.university || '',
+      major: student.major || '',
+      phone: student.phone || '',
+      wechat: student.wechat || '',
+      qq: student.qq || '',
+      city: student.city || '',
+      province: student.province || '',
+      class_num: student.class_num || '',
+      enroll_year: student.enroll_year || '',
+      message: student.message || '',
+    })
+    setEditing(true)
+  }
+
+  async function saveEdit() {
+    if (isSupabaseConfigured) {
+      const { supabase } = await import('../lib/supabase')
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const { error } = await supabase
+        .from('students')
+        .update(editData)
+        .eq('user_id', authUser.id)
+      if (error) { console.error('Update error:', error); return }
+      setStudent({ ...student, ...editData })
+    } else {
+      setStudent({ ...student, ...editData })
+    }
+    setEditing(false)
+  }
+
+  function updateField(field, value) {
+    setEditData({ ...editData, [field]: value })
+  }
 
   useEffect(() => {
     if (isSupabaseConfigured) {
@@ -209,64 +248,114 @@ export default function StudentProfile() {
 
         {/* Info cards */}
         <div className="p-8 space-y-6">
-          {/* Contact */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
-              联系方式
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {student.phone && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-400">手机</p>
-                  <p className="text-gray-800 font-medium">{student.phone}</p>
-                </div>
-              )}
-              {student.wechat && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-400">微信</p>
-                  <p className="text-gray-800 font-medium">{student.wechat}</p>
-                </div>
-              )}
-              {student.qq && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs text-gray-400">QQ</p>
-                  <p className="text-gray-800 font-medium">{student.qq}</p>
+          {/* Edit button */}
+          {isOwnPage && (
+            <div className="flex justify-end">
+              {!editing ? (
+                <button onClick={startEditing} className="text-sm text-orange-500 hover:text-orange-600 bg-orange-50 px-3 py-1 rounded-lg border-none cursor-pointer">
+                  编辑信息
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button onClick={saveEdit} className="text-sm bg-orange-500 text-white px-4 py-1 rounded-lg border-none cursor-pointer hover:bg-orange-600">
+                    保存
+                  </button>
+                  <button onClick={() => setEditing(false)} className="text-sm bg-gray-200 text-gray-600 px-4 py-1 rounded-lg border-none cursor-pointer hover:bg-gray-300">
+                    取消
+                  </button>
                 </div>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Academic */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
-              学业信息
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-400">入学年份</p>
-                <p className="text-gray-800 font-medium">{student.enroll_year}</p>
+          {editing ? (
+            /* Edit form */
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">姓名</label>
+                  <input value={editData.name} onChange={e => updateField('name', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">高中班级</label>
+                  <input value={editData.class_num} onChange={e => updateField('class_num', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" placeholder="如：3班" />
+                </div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-400">高中班级</p>
-                <p className="text-gray-800 font-medium">{student.class_num}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">大学</label>
+                  <input value={editData.university} onChange={e => updateField('university', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">专业</label>
+                  <input value={editData.major} onChange={e => updateField('major', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-400">所在城市</p>
-                <p className="text-gray-800 font-medium">{student.city}</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">城市</label>
+                  <input value={editData.city} onChange={e => updateField('city', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">入学年份</label>
+                  <input type="number" value={editData.enroll_year} onChange={e => updateField('enroll_year', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">手机</label>
+                  <input value={editData.phone} onChange={e => updateField('phone', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">微信</label>
+                  <input value={editData.wechat} onChange={e => updateField('wechat', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">QQ</label>
+                  <input value={editData.qq} onChange={e => updateField('qq', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">个性留言</label>
+                <textarea value={editData.message} onChange={e => updateField('message', e.target.value)} rows={2}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none" />
               </div>
             </div>
-          </div>
-
-          {/* Signature message */}
-          {student.message && (
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
-                个性留言
-              </h3>
-              <div className="bg-orange-50 border border-orange-100 rounded-lg p-4">
-                <p className="text-gray-700 italic">"{student.message}"</p>
+          ) : (
+            /* Display mode */
+            <>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">联系方式</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {student.phone && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-400">手机</p><p className="text-gray-800 font-medium">{student.phone}</p></div>}
+                  {student.wechat && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-400">微信</p><p className="text-gray-800 font-medium">{student.wechat}</p></div>}
+                  {student.qq && <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-400">QQ</p><p className="text-gray-800 font-medium">{student.qq}</p></div>}
+                </div>
               </div>
-            </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">学业信息</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-400">入学年份</p><p className="text-gray-800 font-medium">{student.enroll_year}</p></div>
+                  <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-400">高中班级</p><p className="text-gray-800 font-medium">{student.class_num}</p></div>
+                  <div className="bg-gray-50 rounded-lg p-3"><p className="text-xs text-gray-400">所在城市</p><p className="text-gray-800 font-medium">{student.city}</p></div>
+                </div>
+              </div>
+              {student.message && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">个性留言</h3>
+                  <div className="bg-orange-50 border border-orange-100 rounded-lg p-4"><p className="text-gray-700 italic">"{student.message}"</p></div>
+                </div>
+              )}
+            </>
           )}
 
           {/* Guestbook / Message Board */}
