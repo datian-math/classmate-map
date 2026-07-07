@@ -3,6 +3,7 @@ import { useAuth } from '../lib/auth'
 import { Navigate } from 'react-router-dom'
 import { fetchAllStudents, approveStudent, rejectStudent, deleteStudent } from '../lib/students'
 import { provinceNameMap } from '../lib/provinceMap'
+import { supabase } from '../lib/supabase'
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth()
@@ -25,19 +26,33 @@ export default function Admin() {
 
   async function handleApprove(id) {
     await approveStudent(id)
+    // Add to math whitelist
+    const student = students.find((s) => s.id === id)
+    if (student?.user_id) {
+      await supabase.from('math_allowed_users').upsert({ user_id: student.user_id })
+    }
     loadStudents()
   }
 
   async function handleReject(id) {
     await rejectStudent(id)
+    // Remove from math whitelist
+    const student = students.find((s) => s.id === id)
+    if (student?.user_id) {
+      await supabase.from('math_allowed_users').delete().eq('user_id', student.user_id)
+    }
     loadStudents()
   }
 
   async function handleDelete(id) {
-    if (window.confirm('确定删除该同学信息？')) {
-      await deleteStudent(id)
-      loadStudents()
+    if (!window.confirm('确定删除该同学信息？')) return
+    const student = students.find((s) => s.id === id)
+    await deleteStudent(id)
+    // Remove from math whitelist
+    if (student?.user_id) {
+      await supabase.from('math_allowed_users').delete().eq('user_id', student.user_id)
     }
+    loadStudents()
   }
 
   if (authLoading) return <div className="text-center py-12 text-gray-400">加载中...</div>
