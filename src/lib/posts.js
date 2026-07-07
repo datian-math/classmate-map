@@ -72,19 +72,28 @@ export async function createPost({ studentId, authorName, content, photoFile, vi
 
     // Upload video
     if (videoFile) {
-      const ext = videoFile.name.split('.').pop()
-      const fileName = `video_${Date.now()}.${ext}`
-      const filePath = `${authUser.id}/${fileName}`
+      // Supabase free tier limit is 5MB
+      if (videoFile.size > 5 * 1024 * 1024) {
+        console.error('视频超过5MB限制，请压缩后上传')
+        // Still create the post without video
+      } else {
+        const ext = videoFile.name.split('.').pop()
+        const fileName = `video_${Date.now()}.${ext}`
+        const filePath = `${authUser.id}/${fileName}`
 
-      const { error: uploadError } = await supabase.storage
-        .from('post-photos')
-        .upload(filePath, videoFile)
-
-      if (!uploadError) {
-        const { data: urlData } = supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('post-photos')
-          .getPublicUrl(filePath)
-        videoUrl = urlData.publicUrl
+          .upload(filePath, videoFile)
+
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from('post-photos')
+            .getPublicUrl(filePath)
+          videoUrl = urlData.publicUrl
+        } else {
+          console.error('视频上传失败:', uploadError.message)
+          // Post is still created without video
+        }
       }
     }
 

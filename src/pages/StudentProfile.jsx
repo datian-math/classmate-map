@@ -488,6 +488,7 @@ function PostCard({ post, onDelete, user }) {
   const [showComments, setShowComments] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => {
     fetchLikes(post.id).then(setLikes)
@@ -551,7 +552,8 @@ function PostCard({ post, onDelete, user }) {
         <img
           src={post.photo_url}
           alt="照片"
-          className="mt-2 max-h-60 rounded-lg border border-gray-200"
+          className="mt-2 max-h-60 rounded-lg border border-gray-200 cursor-pointer hover:opacity-90"
+          onClick={() => setLightbox(post.photo_url)}
         />
       )}
       {post.video_url && (
@@ -562,6 +564,27 @@ function PostCard({ post, onDelete, user }) {
         >
           您的浏览器不支持视频播放
         </video>
+      )}
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center p-4"
+          onClick={() => setLightbox(null)}
+        >
+          <img
+            src={lightbox}
+            alt="原图"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setLightbox(null)}
+            className="absolute top-4 right-4 text-white text-3xl bg-transparent border-none cursor-pointer hover:text-gray-300"
+          >
+            ×
+          </button>
+        </div>
       )}
 
       {/* Like and comment buttons */}
