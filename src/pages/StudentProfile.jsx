@@ -15,12 +15,10 @@ export default function StudentProfile() {
   const [newContent, setNewContent] = useState('')
   const [newPhoto, setNewPhoto] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
-  const [newVideo, setNewVideo] = useState(null)
-  const [videoPreview, setVideoPreview] = useState(null)
+  const [newVideo, setNewVideo] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const fileInputRef = useRef(null)
-  const videoInputRef = useRef(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const avatarInputRef = useRef(null)
   const [editing, setEditing] = useState(false)
@@ -91,19 +89,6 @@ export default function StudentProfile() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  function handleVideoSelect(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    setNewVideo(file)
-    setVideoPreview(URL.createObjectURL(file))
-  }
-
-  function removeVideo() {
-    setNewVideo(null)
-    setVideoPreview(null)
-    if (videoInputRef.current) videoInputRef.current.value = ''
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
     if (!newContent.trim() && !newPhoto && !newVideo) return
@@ -116,7 +101,7 @@ export default function StudentProfile() {
       authorName,
       content: newContent.trim(),
       photoFile: newPhoto,
-      videoFile: newVideo,
+      videoUrl: newVideo.trim() || null,
     })
 
     if (post) {
@@ -124,11 +109,9 @@ export default function StudentProfile() {
       setNewContent('')
       setNewPhoto(null)
       setPhotoPreview(null)
-      setNewVideo(null)
-      setVideoPreview(null)
+      setNewVideo('')
       setShowForm(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
-      if (videoInputRef.current) videoInputRef.current.value = ''
     }
     setSubmitting(false)
   }
@@ -418,45 +401,21 @@ export default function StudentProfile() {
                   )}
                 </div>
 
-                {/* Video upload */}
+                {/* Video link */}
                 <div>
                   <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoSelect}
-                    className="hidden"
+                    type="text"
+                    value={newVideo}
+                    onChange={(e) => setNewVideo(e.target.value)}
+                    placeholder="粘贴视频链接（B站、抖音等）"
+                    className="w-full text-sm border border-dashed border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
-                  {videoPreview ? (
-                    <div className="relative inline-block">
-                      <video
-                        src={videoPreview}
-                        className="h-24 rounded-lg border border-gray-200"
-                        muted
-                      />
-                      <button
-                        type="button"
-                        onClick={removeVideo}
-                        className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center border-none cursor-pointer"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => videoInputRef.current?.click()}
-                      className="text-sm text-gray-500 bg-white border border-dashed border-gray-300 rounded-lg px-4 py-2 hover:border-orange-400 hover:text-orange-500 cursor-pointer"
-                    >
-                      + 上传视频
-                    </button>
-                  )}
                 </div>
 
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    disabled={submitting || (!newContent.trim() && !newPhoto && !newVideo)}
+                    disabled={submitting || (!newContent.trim() && !newPhoto && !newVideo.trim())}
                     className="bg-orange-500 text-white px-5 py-1.5 rounded-lg hover:bg-orange-600 text-sm font-medium disabled:opacity-50 border-none cursor-pointer"
                   >
                     {submitting ? '发送中...' : '发送'}
@@ -557,13 +516,13 @@ function PostCard({ post, onDelete, user }) {
         />
       )}
       {post.video_url && (
-        <video
-          src={post.video_url}
-          controls
-          className="mt-2 max-w-full max-h-72 rounded-lg border border-gray-200"
-        >
-          您的浏览器不支持视频播放
-        </video>
+        <div className="mt-2">
+          <a href={post.video_url} target="_blank" rel="noopener noreferrer"
+            className="text-sm text-blue-500 hover:text-blue-600 underline inline-flex items-center gap-1"
+          >
+            🎬 查看视频
+          </a>
+        </div>
       )}
 
       {/* Lightbox */}
