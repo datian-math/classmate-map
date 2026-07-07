@@ -1,8 +1,18 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import { supabase } from '../lib/supabase'
 
 export default function Navbar() {
   const { user, isAdmin, signOut } = useAuth()
+
+  async function goToMathSite() {
+    const { data: { session } } = await supabase.auth.getSession()
+    const base = 'https://mydeploy-web.netlify.app'
+    const hash = session
+      ? `access_token=${session.access_token}&refresh_token=${session.refresh_token || ''}`
+      : ''
+    window.open(`${base}#${hash}`, '_blank')
+  }
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -13,6 +23,12 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           {user ? (
             <>
+              <button
+                onClick={goToMathSite}
+                className="text-sm text-purple-600 hover:text-purple-700 bg-purple-50 px-3 py-1 rounded-lg border border-purple-200 cursor-pointer"
+              >
+                题库
+              </button>
               {isAdmin && (
                 <Link to="/admin" className="text-gray-600 hover:text-orange-500 no-underline text-sm">
                   管理后台
