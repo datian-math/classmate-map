@@ -73,7 +73,7 @@ export default function ChinaMap({ students = [] }) {
   })
 
   useEffect(() => {
-    fetch('/maps/china.json')
+    fetch(import.meta.env.BASE_URL + 'maps/china.json')
       .then((res) => res.json())
       .then((data) => setGeoData(data))
       .catch((err) => console.error('Failed to load China map:', err))

@@ -18,7 +18,7 @@ export default function ProvinceMap({ provinceCode, students = [] }) {
   })
 
   useEffect(() => {
-    fetch(`/maps/provinces/${provinceCode}.json`)
+    fetch(import.meta.env.BASE_URL + `maps/provinces/${provinceCode}.json`)
       .then((res) => res.json())
       .then((data) => setGeoData(data))
       .catch((err) => console.error('Failed to load province map:', err))
