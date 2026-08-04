@@ -11,7 +11,7 @@ import Admin from './pages/Admin'
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/classmate-map">
         <div className="min-h-screen bg-gray-50">
           <Navbar />
           <main>
