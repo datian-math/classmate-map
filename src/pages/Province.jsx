@@ -6,7 +6,7 @@ import { fetchStudentsByProvince } from '../lib/students'
 import { getProvinceName } from '../lib/provinceMap'
 import { mockStudents } from '../lib/mockData'
 
-const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL
+import { isSupabaseConfigured } from '../lib/supabase'
 
 export default function Province() {
   const { code } = useParams()

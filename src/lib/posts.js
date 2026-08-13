@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 import { mockPosts } from './mockData'
 
-const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL
+import { isSupabaseConfigured } from './supabase'
 
 const STORAGE_KEY = 'classmate-map-posts'
 

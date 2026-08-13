@@ -7,7 +7,7 @@ import { fetchWeather } from '../lib/weather'
 import { useAuth } from '../lib/auth'
 import { mockStudents } from '../lib/mockData'
 
-const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL
+import { isSupabaseConfigured } from '../lib/supabase'
 
 export default function Home() {
   const [students, setStudents] = useState([])

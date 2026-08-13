@@ -6,7 +6,7 @@ import { fetchPosts, createPost, deletePost, fetchComments, createComment, fetch
 import { useAuth } from '../lib/auth'
 import { mockStudents } from '../lib/mockData'
 
-const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL
+import { isSupabaseConfigured } from '../lib/supabase'
 
 export default function StudentProfile() {
   const { id } = useParams()
