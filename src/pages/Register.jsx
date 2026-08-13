@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { createStudent } from '../lib/students'
@@ -27,6 +27,11 @@ export default function Register() {
 
   const { signUp, user } = useAuth()
   const navigate = useNavigate()
+
+  // 已登录用户（注册过账号）直接进入资料填写步骤
+  useEffect(() => {
+    if (user) setStep(2)
+  }, [user])
 
   const handleSignUp = async (e) => {
     e.preventDefault()

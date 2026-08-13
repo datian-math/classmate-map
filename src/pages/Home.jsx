@@ -14,6 +14,7 @@ export default function Home() {
   const [posts, setPosts] = useState([])
   const [weather, setWeather] = useState(null)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [needsProfile, setNeedsProfile] = useState(false)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -24,6 +25,21 @@ export default function Home() {
     }
     fetchLatestPosts().then(setPosts)
   }, [])
+
+  // 检查当前登录用户是否已填写个人信息
+  useEffect(() => {
+    if (!isSupabaseConfigured || !user) return
+    async function checkProfile() {
+      const { supabase } = await import('../lib/supabase')
+      const { data } = await supabase
+        .from('students')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      setNeedsProfile(!data)
+    }
+    checkProfile()
+  }, [user])
 
   // Fetch weather for logged-in user's city
   useEffect(() => {
@@ -60,6 +76,20 @@ export default function Home() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
+      {needsProfile && (
+        <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-bold text-orange-700">还差一步！请完善你的同学信息</p>
+            <p className="text-sm text-orange-600">填写姓名、大学、省份等信息，管理员审核通过后就能在地图上显示，并访问题库</p>
+          </div>
+          <Link
+            to="/register"
+            className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 no-underline text-sm whitespace-nowrap shrink-0"
+          >
+            完善资料
+          </Link>
+        </div>
+      )}
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-2" style={{ fontFamily: 'KaiTi, STKaiti, serif' }}>
         大田的朋友们
       </h1>
