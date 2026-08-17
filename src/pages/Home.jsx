@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ChinaMap from '../components/ChinaMap'
+import NewsFeed from '../components/NewsFeed'
 import { fetchApprovedStudents } from '../lib/students'
 import { fetchLatestPosts } from '../lib/posts'
 import { fetchWeather } from '../lib/weather'
@@ -214,6 +215,9 @@ export default function Home() {
               </div>
             </div>
           </div>
+
+          {/* 今日要闻 */}
+          <NewsFeed />
         </div>
 
         {/* Right sidebar - Latest messages */}
