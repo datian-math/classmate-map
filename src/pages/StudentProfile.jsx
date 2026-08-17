@@ -5,6 +5,7 @@ import { fetchStudent } from '../lib/students'
 import { fetchPosts, createPost, deletePost, fetchComments, createComment, fetchLikes, toggleLike } from '../lib/posts'
 import { useAuth } from '../lib/auth'
 import { mockStudents } from '../lib/mockData'
+import { provinceCodes, provinceNameMap } from '../lib/provinceMap'
 
 import { isSupabaseConfigured } from '../lib/supabase'
 
@@ -280,10 +281,22 @@ export default function StudentProfile() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-xs text-gray-500 mb-1">省份</label>
+                  <select value={editData.province} onChange={e => updateField('province', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+                    <option value="">选择省份</option>
+                    {provinceCodes.map(code => (
+                      <option key={code} value={code}>{provinceNameMap[code]}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-xs text-gray-500 mb-1">城市</label>
                   <input value={editData.city} onChange={e => updateField('city', e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">入学年份</label>
                   <input type="number" value={editData.enroll_year} onChange={e => updateField('enroll_year', e.target.value)}
