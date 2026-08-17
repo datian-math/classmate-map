@@ -26,17 +26,17 @@ export default function Home() {
     fetchLatestPosts().then(setPosts)
   }, [])
 
-  // 检查当前登录用户是否已填写个人信息
+  // 检查当前登录用户是否已填完整资料（无记录或缺少省份/城市都需要完善）
   useEffect(() => {
     if (!isSupabaseConfigured || !user) return
     async function checkProfile() {
       const { supabase } = await import('../lib/supabase')
       const { data } = await supabase
         .from('students')
-        .select('id')
+        .select('id, province, city')
         .eq('user_id', user.id)
         .maybeSingle()
-      setNeedsProfile(!data)
+      setNeedsProfile(!data || !data.province || !data.city)
     }
     checkProfile()
   }, [user])
@@ -79,8 +79,8 @@ export default function Home() {
       {needsProfile && (
         <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
           <div>
-            <p className="font-bold text-orange-700">还差一步！请完善你的同学信息</p>
-            <p className="text-sm text-orange-600">填写姓名、大学、省份等信息，管理员审核通过后就能在地图上显示，并访问题库</p>
+            <p className="font-bold text-orange-700">还差一步！请完善你的资料</p>
+            <p className="text-sm text-orange-600">请填写大学、省份、城市等信息，填完后就能在地图上显示，并访问题库</p>
           </div>
           <Link
             to="/register"
