@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react'
 
 // 新浪新闻 JSONP（无 CORS 问题，免费）
-const SINA_URL = 'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2509&num=30&callback='
-
-// 教育相关关键词
-const EDU_KEYWORDS = [
-  '教育', '高考', '中考', '学校', '大学', '学院', '招生', '录取', '考生', '考试',
-  '教师', '老师', '学生', '考研', '教育部', '教育厅', '高校', '学业', '课程',
-  '中小学', '幼儿园', '专业', '学位', '就业', '留学',
-]
+const SINA_URL = 'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2509&num=25&callback='
 
 export default function NewsFeed() {
   const [news, setNews] = useState([])
@@ -44,21 +37,12 @@ export default function NewsFeed() {
     async function fetchNews() {
       const items = await loadSina()
       if (cancelled) return
-
-      const all = items
+      const clean = items
         .filter(i => i.title)
         .map(i => ({ title: i.title, link: i.url || '', time: i.intime || '' }))
-
-      // 先取教育相关新闻
-      const eduNews = all.filter(n =>
-        EDU_KEYWORDS.some(k => n.title.includes(k))
-      )
-      // 不足 10 条用其他要闻补足
-      const rest = all.filter(n => !EDU_KEYWORDS.some(k => n.title.includes(k)))
-      const final = [...eduNews, ...rest].slice(0, 10)
-
-      if (final.length > 0) {
-        setNews(final)
+        .slice(0, 20)
+      if (clean.length > 0) {
+        setNews(clean)
         setSource('新浪新闻')
       }
       setLoading(false)
@@ -79,14 +63,12 @@ export default function NewsFeed() {
     } catch { return '' }
   }
 
-  const isEdu = (title) => EDU_KEYWORDS.some(k => title.includes(k))
-
   return (
     <div className="bg-white rounded-xl shadow-sm p-4">
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
-          <span>📚</span> 教育讯息
+          <span>📰</span> 今日要闻
         </h3>
         <span className="text-[10px] text-gray-300">
           {source ? `${source} · ${new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}` : ''}
@@ -94,11 +76,11 @@ export default function NewsFeed() {
       </div>
 
       {/* 新闻列表（可滚动） */}
-      <div className="overflow-y-auto pr-1" style={{ maxHeight: '220px' }}>
+      <div className="overflow-y-auto pr-1" style={{ maxHeight: '200px' }}>
         {loading && news.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-4">讯息加载中...</p>
+          <p className="text-xs text-gray-400 text-center py-4">新闻加载中...</p>
         ) : news.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-4">暂无讯息</p>
+          <p className="text-xs text-gray-400 text-center py-4">暂无新闻</p>
         ) : (
           <ul className="space-y-1.5">
             {news.map((n, i) => (
@@ -113,9 +95,6 @@ export default function NewsFeed() {
                   className="flex-1 text-xs text-gray-600 hover:text-orange-500 transition-colors leading-relaxed line-clamp-1 group"
                 >
                   {n.title}
-                  {isEdu(n.title) && (
-                    <span className="ml-1 text-[9px] bg-orange-50 text-orange-400 px-1 py-0.5 rounded">教育</span>
-                  )}
                 </a>
                 {n.time && (
                   <span className="text-[10px] text-gray-300 shrink-0 mt-0.5">{fmtTime(n.time)}</span>
