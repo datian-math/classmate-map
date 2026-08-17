@@ -1,7 +1,14 @@
 import { useState, useEffect } from 'react'
 
-// 新浪新闻 JSONP（无 CORS 问题，免费）
-const SINA_URL = 'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2509&num=25&callback='
+// 新浪科技/商业新闻 JSONP（无 CORS 问题，免费）
+const SINA_URL = 'https://feed.mix.sina.com.cn/api/roll/get?pageid=153&lid=2515&num=30&callback='
+
+// AI 相关关键词
+const AI_KEYWORDS = [
+  'AI', '人工智能', '大模型', '智能', 'GPT', 'OpenAI', '机器人', '芯片', '算法',
+  '模型', '训练', '英伟达', '谷歌', '微软', '华为', '数据', '自动驾驶', '数字人',
+  '生成式', '机器学习', '深度学习', '神经网络',
+]
 
 export default function NewsFeed() {
   const [news, setNews] = useState([])
@@ -37,13 +44,23 @@ export default function NewsFeed() {
     async function fetchNews() {
       const items = await loadSina()
       if (cancelled) return
-      const clean = items
+
+      const all = items
         .filter(i => i.title)
         .map(i => ({ title: i.title, link: i.url || '', time: i.intime || '' }))
-        .slice(0, 20)
-      if (clean.length > 0) {
-        setNews(clean)
-        setSource('新浪新闻')
+
+      // 优先 AI 相关新闻
+      const aiNews = all.filter(n =>
+        AI_KEYWORDS.some(k => n.title.toUpperCase().includes(k))
+      )
+      const rest = all.filter(n =>
+        !AI_KEYWORDS.some(k => n.title.toUpperCase().includes(k))
+      )
+      const final = [...aiNews, ...rest].slice(0, 20)
+
+      if (final.length > 0) {
+        setNews(final)
+        setSource('新浪科技')
       }
       setLoading(false)
     }
@@ -63,12 +80,14 @@ export default function NewsFeed() {
     } catch { return '' }
   }
 
+  const isAi = (title) => AI_KEYWORDS.some(k => title.toUpperCase().includes(k))
+
   return (
     <div className="bg-white rounded-xl shadow-sm p-4">
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-gray-700 flex items-center gap-1.5">
-          <span>📰</span> 今日要闻
+          <span>🤖</span> AI 前沿
         </h3>
         <span className="text-[10px] text-gray-300">
           {source ? `${source} · ${new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })}` : ''}
@@ -76,11 +95,11 @@ export default function NewsFeed() {
       </div>
 
       {/* 新闻列表（可滚动） */}
-      <div className="overflow-y-auto pr-1" style={{ maxHeight: '200px' }}>
+      <div className="overflow-y-auto pr-1" style={{ maxHeight: '220px' }}>
         {loading && news.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-4">新闻加载中...</p>
+          <p className="text-xs text-gray-400 text-center py-4">资讯加载中...</p>
         ) : news.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-4">暂无新闻</p>
+          <p className="text-xs text-gray-400 text-center py-4">暂无资讯</p>
         ) : (
           <ul className="space-y-1.5">
             {news.map((n, i) => (
@@ -95,6 +114,9 @@ export default function NewsFeed() {
                   className="flex-1 text-xs text-gray-600 hover:text-orange-500 transition-colors leading-relaxed line-clamp-1 group"
                 >
                   {n.title}
+                  {isAi(n.title) && (
+                    <span className="ml-1 text-[9px] bg-blue-50 text-blue-400 px-1 py-0.5 rounded">AI</span>
+                  )}
                 </a>
                 {n.time && (
                   <span className="text-[10px] text-gray-300 shrink-0 mt-0.5">{fmtTime(n.time)}</span>
@@ -105,7 +127,7 @@ export default function NewsFeed() {
         )}
       </div>
 
-      {news.length >= 10 && (
+      {news.length >= 20 && (
         <div className="mt-2 text-center text-[10px] text-gray-300">
           ↑ 可滚动查看全部
         </div>
