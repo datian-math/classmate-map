@@ -6,6 +6,7 @@ import { fetchPosts, createPost, deletePost, fetchComments, createComment, fetch
 import { useAuth } from '../lib/auth'
 import { mockStudents } from '../lib/mockData'
 import { provinceCodes, provinceNameMap } from '../lib/provinceMap'
+import { provinceCities } from '../lib/provinceCities'
 
 import { isSupabaseConfigured } from '../lib/supabase'
 
@@ -282,7 +283,16 @@ export default function StudentProfile() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">省份</label>
-                  <select value={editData.province} onChange={e => updateField('province', e.target.value)}
+                  <select
+                    value={editData.province}
+                    onChange={e => {
+                      const newProvince = e.target.value
+                      const cities = provinceCities[newProvince] || []
+                      // 省份变了且当前城市不在新省份列表里 → 清空城市
+                      const cityInList = cities.some(c => c.replace(/市$|自治州$|地区$|盟$|特别行政区$/, '') === editData.city)
+                      updateField('province', newProvince)
+                      if (!cityInList) updateField('city', '')
+                    }}
                     className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
                     <option value="">选择省份</option>
                     {provinceCodes.map(code => (
@@ -292,8 +302,17 @@ export default function StudentProfile() {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">城市</label>
-                  <input value={editData.city} onChange={e => updateField('city', e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400" />
+                  <select
+                    value={editData.city}
+                    onChange={e => updateField('city', e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    disabled={!editData.province}
+                  >
+                    <option value="">{editData.province ? '选择城市' : '请先选择省份'}</option>
+                    {(provinceCities[editData.province] || []).map(c => (
+                      <option key={c} value={c.replace(/市$|自治州$|地区$|盟$|特别行政区$/, '')}>{c}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

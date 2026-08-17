@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { createStudent, updateStudent } from '../lib/students'
 import { provinceCodes, provinceNameMap } from '../lib/provinceMap'
+import { provinceCities } from '../lib/provinceCities'
 import { supabase } from '../lib/supabase'
 
 export default function Register() {
@@ -181,7 +182,7 @@ export default function Register() {
             <label className="block text-sm font-medium text-gray-700 mb-1">省份 *</label>
             <select
               value={province}
-              onChange={(e) => setProvince(e.target.value)}
+              onChange={(e) => { setProvince(e.target.value); setCity('') }}
               required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
@@ -193,14 +194,18 @@ export default function Register() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">城市 *</label>
-            <input
-              type="text"
+            <select
               value={city}
               onChange={(e) => setCity(e.target.value)}
               required
+              disabled={!province}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              placeholder="如：武汉"
-            />
+            >
+              <option value="">{province ? '选择城市' : '请先选择省份'}</option>
+              {(provinceCities[province] || []).map(c => (
+                <option key={c} value={c.replace(/市$|自治州$|地区$|盟$|特别行政区$/, '')}>{c}</option>
+              ))}
+            </select>
           </div>
         </div>
         <div>
