@@ -54,6 +54,8 @@ export default function Register() {
 
     setLoading(true)
 
+    // 新注册也要求填省份城市（否则地图上显示不出来）
+
     let userId = user?.id
 
     // 未登录：先创建账号
