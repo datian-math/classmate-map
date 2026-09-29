@@ -7,7 +7,7 @@ export default function Navbar() {
 
   async function goToMathSite() {
     const { data: { session } } = await supabase.auth.getSession()
-    const base = 'https://math-site-d7gwsdwhle5d1e465-1497645935.tcloudbaseapp.com'
+    const base = 'https://datian-math.github.io/mydeploy-web'
     const hash = session
       ? `access_token=${session.access_token}&refresh_token=${session.refresh_token || ''}`
       : ''
