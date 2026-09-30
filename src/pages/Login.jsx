@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
+import QrLogin from '../components/QrLogin'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState('password') // 'password' | 'qr'
   const { signIn } = useAuth()
   const navigate = useNavigate()
 
@@ -29,43 +31,71 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold text-gray-800 text-center mb-8">登录</h1>
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-4">
-        {error && (
-          <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">{error}</div>
-        )}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            placeholder="your@email.com"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">密码</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-            placeholder="••••••••"
-          />
-        </div>
+
+      <div className="mb-4 flex rounded-lg bg-gray-100 p-1 text-sm">
         <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 font-medium disabled:opacity-50"
+          type="button"
+          onClick={() => setMode('password')}
+          className={`flex-1 rounded-md py-1.5 transition ${
+            mode === 'password' ? 'bg-white font-medium text-gray-800 shadow-sm' : 'text-gray-500'
+          }`}
         >
-          {loading ? '登录中...' : '登录'}
+          邮箱密码
         </button>
-        <p className="text-center text-sm text-gray-500">
-          还没有账号？<Link to="/register" className="text-orange-500 hover:underline">立即注册</Link>
-        </p>
-      </form>
+        <button
+          type="button"
+          onClick={() => setMode('qr')}
+          className={`flex-1 rounded-md py-1.5 transition ${
+            mode === 'qr' ? 'bg-white font-medium text-gray-800 shadow-sm' : 'text-gray-500'
+          }`}
+        >
+          扫码登录
+        </button>
+      </div>
+
+      {mode === 'qr' ? (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <QrLogin />
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-4">
+          {error && (
+            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg">{error}</div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">邮箱</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="your@email.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">密码</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              placeholder="••••••••"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 font-medium disabled:opacity-50"
+          >
+            {loading ? '登录中...' : '登录'}
+          </button>
+          <p className="text-center text-sm text-gray-500">
+            还没有账号？<Link to="/register" className="text-orange-500 hover:underline">立即注册</Link>
+          </p>
+        </form>
+      )}
     </div>
   )
 }
