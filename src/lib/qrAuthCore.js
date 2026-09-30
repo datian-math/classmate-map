@@ -17,9 +17,16 @@ export async function sha256Hex(text) {
 /**
  * 拼出二维码里要放的地址。
  *
- * 必须用 hash 路由（#/qr?t=…）：GitHub Pages 是纯静态托管，没有 404 兜底，
- * 把 token 放在普通路径上（/classmate-map/qr?t=…）手机扫码会直接 404。
+ * 两个必须遵守的点（都是踩过坑的）：
+ *  1. token 只能放在 hash 里。放普通路径上（/classmate-map/qr?t=…）手机扫码会 404。
+ *  2. base 必须是**站点根**（/classmate-map/），不能传 location.pathname。
+ *     在登录页时 pathname 是 /classmate-map/login，那个路径在 GitHub Pages 上不存在，
+ *     会命中 404.html，而 404.html 会 location.replace 回首页并**丢掉 hash**，
+ *     结果扫码落在首页、确认页压根不渲染。
+ *
+ * base 传 Vite 的 import.meta.env.BASE_URL（与 vite.config 的 base 一致）。
  */
-export function qrUrlFor(token, origin, pathname) {
-  return `${origin}${pathname}#/qr?t=${token}`
+export function qrUrlFor(token, origin, base = '/') {
+  const b = base.endsWith('/') ? base : base + '/'
+  return `${origin}${b}#/qr?t=${token}`
 }

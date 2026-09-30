@@ -36,7 +36,9 @@ export default function QrLogin() {
       tokenRef.current = token
       secretRef.current = secret
 
-      const url = qrUrlFor(token, window.location.origin, window.location.pathname)
+      // base 必须用站点根，不能用 location.pathname（登录页时是 /classmate-map/login，
+      // 那个路径在 GitHub Pages 上会 404 并被兜底页丢掉 hash）
+      const url = qrUrlFor(token, window.location.origin, import.meta.env.BASE_URL)
       setQr(await QRCode.toDataURL(url, { width: 240, margin: 1 }))
 
       pollRef.current = setInterval(async () => {
