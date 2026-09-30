@@ -26,7 +26,12 @@ export default function QrConfirm() {
     setBusy(true)
     setMsg('')
 
-    const { data: { session } } = await supabase.auth.getSession()
+    // 必须先刷新：access_token 只有 1 小时有效期，而 getSession() 返回的
+    // 是本地缓存（可能早已过期），直接拿去服务端验证会被判 invalid user。
+    // 刷新失败（refresh_token 也失效）时再退回 getSession，拿不到就要求重新登录。
+    const { data: refreshed } = await supabase.auth.refreshSession()
+    const session = refreshed?.session || (await supabase.auth.getSession()).data.session
+
     if (!session) {
       setState('needLogin')
       setBusy(false)
@@ -38,6 +43,10 @@ export default function QrConfirm() {
 
     if (res.ok) {
       setState('done')
+    } else if (res.error === 'invalid user') {
+      // 登录状态失效（refresh 也没救回来）—— 让用户重新登录，而不是显示一句看不懂的英文
+      setState('needLogin')
+      setMsg('你的登录状态已失效，请重新输入邮箱密码')
     } else {
       setState('error')
       setMsg(
