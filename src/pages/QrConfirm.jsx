@@ -65,13 +65,14 @@ export default function QrConfirm() {
     setMsg('')
 
     const { error } = await supabase.auth.signInWithPassword({ email, password: pwd })
-    setBusy(false)
-
     if (error) {
+      setBusy(false)
       setMsg('邮箱或密码不正确')
       return
     }
-    setState('ready')
+    // 输密码这个动作本身已经表明了意图，直接确认，
+    // 不再让用户多点一次「确认登录」——实测很容易漏掉那一步。
+    await confirm()
   }
 
   return (
