@@ -1,17 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { approveLogin } from '../lib/qrAuth'
-
-/** 从 #/qr?t=xxx 里取出 token */
-function readToken() {
-  const hash = window.location.hash || ''
-  const qIdx = hash.indexOf('?')
-  if (qIdx === -1) return ''
-  return new URLSearchParams(hash.slice(qIdx + 1)).get('t') || ''
-}
+import { approveLogin, readQrTokenFromLocation } from '../lib/qrAuth'
 
 export default function QrConfirm() {
-  const [token] = useState(readToken)
+  const [token] = useState(readQrTokenFromLocation)
   // loading | needLogin | ready | done | error
   const [state, setState] = useState('loading')
   const [msg, setMsg] = useState('')

@@ -1,8 +1,14 @@
 // 扫码登录里依赖网络的逻辑（纯函数在 qrAuthCore.js）
 import { supabase } from './supabase'
-import { randomHex, sha256Hex, qrUrlFor } from './qrAuthCore'
+import { randomHex, sha256Hex, qrUrlFor, parseQrToken } from './qrAuthCore'
 
-export { randomHex, sha256Hex, qrUrlFor }
+export { randomHex, sha256Hex, qrUrlFor, parseQrToken }
+
+/** 从当前地址栏读扫码 token（优先 ?qr=，兼容旧的 #/qr?t=） */
+export function readQrTokenFromLocation() {
+  if (typeof window === 'undefined') return ''
+  return parseQrToken(window.location.search, window.location.hash)
+}
 
 /**
  * 发起一次登录请求。

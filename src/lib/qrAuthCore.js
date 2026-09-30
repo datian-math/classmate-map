@@ -17,16 +17,34 @@ export async function sha256Hex(text) {
 /**
  * 拼出二维码里要放的地址。
  *
- * 两个必须遵守的点（都是踩过坑的）：
- *  1. token 只能放在 hash 里。放普通路径上（/classmate-map/qr?t=…）手机扫码会 404。
- *  2. base 必须是**站点根**（/classmate-map/），不能传 location.pathname。
- *     在登录页时 pathname 是 /classmate-map/login，那个路径在 GitHub Pages 上不存在，
- *     会命中 404.html，而 404.html 会 location.replace 回首页并**丢掉 hash**，
- *     结果扫码落在首页、确认页压根不渲染。
+ * 用 **query 参数**而不是 hash，这是踩过坑后的结论：
+ *   hash（#/qr?t=…）在电脑浏览器上正常，但在手机/微信内置浏览器里会被丢掉
+ *   （不发给服务器，跳转和安全检测环节都可能丢），症状是扫码后落在首页、
+ *   确认页压根不渲染。query 是真实请求的一部分，任何环境都不丢。
+ *
+ * 路径必须是**站点根**（/classmate-map/），不能传 location.pathname：
+ * 登录页时 pathname 是 /classmate-map/login，那个路径在 GitHub Pages 上不存在，
+ * 会命中 404.html 然后被跳回首页。
  *
  * base 传 Vite 的 import.meta.env.BASE_URL（与 vite.config 的 base 一致）。
  */
 export function qrUrlFor(token, origin, base = '/') {
   const b = base.endsWith('/') ? base : base + '/'
-  return `${origin}${b}#/qr?t=${token}`
+  return `${origin}${b}?qr=${token}`
+}
+
+/**
+ * 从 URL 里解析扫码 token。优先 query（?qr=），同时兼容老的 hash 写法。
+ * 参数直接给字符串，方便单测。
+ */
+export function parseQrToken(search, hash) {
+  const fromQuery = new URLSearchParams(search || '').get('qr')
+  if (fromQuery) return fromQuery
+
+  const h = hash || ''
+  if (h.startsWith('#/qr')) {
+    const q = h.indexOf('?')
+    if (q !== -1) return new URLSearchParams(h.slice(q + 1)).get('t') || ''
+  }
+  return ''
 }
