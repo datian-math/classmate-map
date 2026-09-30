@@ -40,21 +40,32 @@ export default function QrLogin() {
       setQr(await QRCode.toDataURL(url, { width: 240, margin: 1 }))
 
       pollRef.current = setInterval(async () => {
-        const st = await pollStatus(token)
-        if (st === 'expired') {
+        const { status, error: pollErr } = await pollStatus(token)
+
+        // 网络/权限错误要如实报出来，不能伪装成"二维码过期"
+        if (pollErr) {
+          stopTimers()
+          setErr('查询登录状态失败：' + pollErr)
+          return
+        }
+        if (status === 'expired') {
           stopTimers()
           setLeftMs(0)
           return
         }
-        if (st !== 'approved') return
+        if (status !== 'approved') return
 
         // 已确认：用 secret 换回一次性登录链接，然后跳过去
         stopTimers()
-        const link = await claimLogin(token, secretRef.current)
+        const { link, error: claimErr } = await claimLogin(token, secretRef.current)
         if (link) {
           window.location.href = link
         } else {
-          setErr('取回登录链接失败，请点下方按钮刷新二维码')
+          setErr(
+            claimErr
+              ? `取回登录链接失败：${claimErr}`
+              : '取回登录链接失败，请点下方按钮刷新二维码'
+          )
         }
       }, POLL_MS)
 

@@ -23,7 +23,7 @@ export async function createLoginRequest() {
   return { token, secret }
 }
 
-/** 轮询状态。行不存在、已过期、或读不到都返回 'expired' */
+/** 轮询状态。行不存在或已过期都返回 'expired' */
 export async function pollStatus(token) {
   const { data, error } = await supabase
     .from('login_requests')
@@ -31,19 +31,25 @@ export async function pollStatus(token) {
     .eq('token', token)
     .maybeSingle()
 
-  if (error || !data) return 'expired'
-  if (new Date(data.expires_at) < new Date()) return 'expired'
-  return data.status === 'approved' ? 'approved' : 'pending'
+  // 网络/权限错误不要伪装成"过期"，否则用户看到"二维码已失效"会被误导
+  if (error) return { status: 'error', error: error.message }
+  if (!data) return { status: 'expired' }
+  if (new Date(data.expires_at) < new Date()) return { status: 'expired' }
+  return { status: data.status === 'approved' ? 'approved' : 'pending' }
 }
 
-/** 用 token + secret 换回一次性登录链接；secret 不匹配或未确认时返回 null */
+/**
+ * 用 token + secret 换回一次性登录链接。
+ * 返回 { link, error }：link 为 null 且有 error 时，错误信息会原样透出，
+ * 不再像早先那样静默返回 null —— 排查 schema/权限类问题时那次很难定位。
+ */
 export async function claimLogin(token, secret) {
   const { data, error } = await supabase.rpc('claim_login', {
     p_token: token,
     p_secret: secret,
   })
-  if (error) return null
-  return data || null
+  if (error) return { link: null, error: error.message }
+  return { link: data || null, error: null }
 }
 
 /** 手机端：确认这台电脑登录 */
